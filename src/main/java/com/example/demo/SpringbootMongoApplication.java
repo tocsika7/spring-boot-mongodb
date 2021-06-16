@@ -40,19 +40,31 @@ public class SpringbootMongoApplication {
 					LocalDateTime.now()
 			);
 
-			Query query = new Query();
-			query.addCriteria(Criteria.where("email").is(email));
+		//	usingMongoTemplateAndQuery(repository, template, email, student);
 
-			List<Student> students = template.find(query, Student.class);
-			if(students.size() > 1) {
-				throw new IllegalStateException("Found many students with email " + email);
-			}
-
-			if(students.isEmpty()) {
-				repository.insert(student);
-			} else {
-				System.out.println(student + " already exists");
-			}
+			repository.findStudentByEmail(email)
+					.ifPresentOrElse(s -> {
+						System.out.println(s + " already exists");
+					}, ()->{
+						System.out.println("Inserting student " + student);
+						repository.insert(student);
+					});
 		};
+	}
+
+	private void usingMongoTemplateAndQuery(StudentRepository repository, MongoTemplate template, String email, Student student) {
+		Query query = new Query();
+		query.addCriteria(Criteria.where("email").is(email));
+
+		List<Student> students = template.find(query, Student.class);
+		if(students.size() > 1) {
+			throw new IllegalStateException("Found many students with email " + email);
+		}
+
+		if(students.isEmpty()) {
+			repository.insert(student);
+		} else {
+			System.out.println(student + " already exists");
+		}
 	}
 }
